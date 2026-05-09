@@ -1,44 +1,51 @@
-import Anthropic from '@anthropic-ai/sdk';
 import { env } from '#config/env.js';
 import { buildPrompt } from '#lib/prompts.js';
 import { logger } from '#lib/logger.js';
-
-const anthropic = new Anthropic({ apiKey: env.ANTHROPIC_API_KEY });
+import { getProvider } from '#services/llm/index.js';
 
 /**
- * Refina a caption de um post usando a Claude API.
+ * Refina a caption de um post usando o LLM configurado (Claude ou GPT).
  * Em DRY_RUN, retorna os dados originais sem chamar a API.
  * @param {object} post - Post da tabela atendevida_social_posts
  * @returns {Promise<{ caption: string, hashtags: string[], copy_curta: string }>}
  */
 export async function refineCaption(post) {
   if (env.DRY_RUN) {
-    logger.info({ post_id: post.id }, 'DRY_RUN: pulando Claude API');
-    return {
-      caption: post.copy_principal,
-      hashtags: post.hashtags ?? [],
-      copy_curta: post.copy_curta ?? post.copy_principal.slice(0, 220),
-    };
+    logger.info({ post_id: post.id }, 'DRY_RUN: pulando LLM API');
+    return fallback(post);
   }
 
+  const provider = getProvider();
   const prompt = buildPrompt(post);
 
-  logger.info({ post_id: post.id, model: env.ANTHROPIC_MODEL }, 'Chamando Claude API');
+  logger.info(
+    { post_id: post.id, provider: provider.providerName },
+    'Chamando LLM para refinar caption',
+  );
 
-  const response = await anthropic.messages.create({
-    model: env.ANTHROPIC_MODEL,
-    max_tokens: 1024,
-    messages: [{ role: 'user', content: prompt }],
-  });
+  try {
+    const rawText = await provider.complete(prompt);
+    return parseResponse(rawText, post);
+  } catch (err) {
+    logger.warn(
+      { err: err.message, provider: provider.providerName },
+      'Falha na chamada do LLM — usando copy original',
+    );
+    return fallback(post);
+  }
+}
 
-  const rawText = response.content[0]?.text ?? '';
-
-  return parseResponse(rawText, post);
+function fallback(post) {
+  return {
+    caption: post.copy_principal,
+    hashtags: post.hashtags ?? [],
+    copy_curta: post.copy_curta ?? post.copy_principal.slice(0, 220),
+  };
 }
 
 function parseResponse(rawText, post) {
   try {
-    // Claude pode retornar markdown code block — extrair só o JSON
+    // Extrair só o JSON caso venha com markdown ou texto extra
     const jsonMatch = rawText.match(/\{[\s\S]*\}/);
     if (!jsonMatch) throw new Error('Nenhum JSON encontrado na resposta');
 
@@ -56,12 +63,8 @@ function parseResponse(rawText, post) {
   } catch (err) {
     logger.warn(
       { err: err.message, raw: rawText.slice(0, 100) },
-      'Falha ao parsear resposta da Claude — usando copy original',
+      'Falha ao parsear resposta do LLM — usando copy original',
     );
-    return {
-      caption: post.copy_principal,
-      hashtags: post.hashtags ?? [],
-      copy_curta: post.copy_curta ?? post.copy_principal.slice(0, 220),
-    };
+    return fallback(post);
   }
 }

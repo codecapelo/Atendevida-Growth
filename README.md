@@ -283,9 +283,19 @@ SUPABASE_URL=https://xxxxx.supabase.co
 SUPABASE_SERVICE_ROLE_KEY=eyJxxxxx
 # ⚠️ NUNCA usar a anon key. Service role é necessária pro cron bypassar RLS.
 
+# ─── LLM Provider ────────────────────────────────────
+# Escolha entre 'anthropic' ou 'openai'
+LLM_PROVIDER=anthropic
+
 # ─── Anthropic (Claude API) ──────────────────────────
+# Obrigatório se LLM_PROVIDER=anthropic
 ANTHROPIC_API_KEY=sk-ant-xxxxx
 ANTHROPIC_MODEL=claude-sonnet-4-20250514
+
+# ─── OpenAI (GPT API) ────────────────────────────────
+# Obrigatório se LLM_PROVIDER=openai
+OPENAI_API_KEY=sk-xxxxx
+OPENAI_MODEL=gpt-4o
 
 # ─── Meta Graph API (Instagram) ──────────────────────
 META_ACCESS_TOKEN=EAABxxxxx
