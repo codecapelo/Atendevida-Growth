@@ -16,11 +16,11 @@
     "test:meta-token": "node scripts/test-meta-token.js"
   },
   "imports": {
-    "#config/*": "./src/config/*.js",
-    "#lib/*": "./src/lib/*.js",
-    "#services/*": "./src/services/*.js",
-    "#jobs/*": "./src/jobs/*.js",
-    "#routes/*": "./src/routes/*.js"
+    "#config/*": "./src/config/*",
+    "#lib/*": "./src/lib/*",
+    "#services/*": "./src/services/*",
+    "#jobs/*": "./src/jobs/*",
+    "#routes/*": "./src/routes/*"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.39.0",
