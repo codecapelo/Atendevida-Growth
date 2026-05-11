@@ -1,0 +1,124 @@
+<%
+  const action = isNew ? '/admin/posts' : '/admin/posts/' + post.id;
+  const hashtagsValue = (post.hashtags || []).join(' ');
+%>
+<form
+  method="post"
+  action="<%= action %>"
+  x-data="postForm({ initial: <%= JSON.stringify({ copy_principal: post.copy_principal, copy_curta: post.copy_curta, hashtags: post.hashtags || [], cta: post.cta, imagem_url: post.imagem_url, imagem_prompt: post.imagem_prompt, video_url: post.video_url, pilar: post.pilar, formato: post.formato, tema: post.tema }).replace(/"/g, '&quot;') %>, postId: '<%= post.id || '' %>' })"
+  class="grid grid-cols-1 lg:grid-cols-3 gap-6"
+>
+  <div class="lg:col-span-2 space-y-4">
+    <div class="bg-white border border-slate-200 rounded-xl p-5 space-y-4">
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="block text-xs font-medium text-slate-600 mb-1">Pilar</label>
+          <select name="pilar" required class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm">
+            <% ['educacao','casos_comuns','bastidores','mitos','renovacao_receita'].forEach(function(p){ %>
+              <option value="<%= p %>" <%= post.pilar === p ? 'selected' : '' %>><%= p %></option>
+            <% }); %>
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-slate-600 mb-1">Formato</label>
+          <select name="formato" required class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm">
+            <% ['estatico','carrossel','reel','story'].forEach(function(f){ %>
+              <option value="<%= f %>" <%= post.formato === f ? 'selected' : '' %>><%= f %></option>
+            <% }); %>
+          </select>
+        </div>
+      </div>
+
+      <div>
+        <label class="block text-xs font-medium text-slate-600 mb-1">Tema</label>
+        <input type="text" name="tema" required maxlength="200" value="<%= post.tema || '' %>" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" />
+      </div>
+
+      <div>
+        <label class="block text-xs font-medium text-slate-600 mb-1">Copy principal</label>
+        <textarea name="copy_principal" required rows="6" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm font-mono" x-model="form.copy_principal"><%= post.copy_principal || '' %></textarea>
+      </div>
+
+      <div>
+        <div class="flex items-center justify-between mb-1">
+          <label class="block text-xs font-medium text-slate-600">Copy curta (220 caracteres)</label>
+          <span class="text-xs text-slate-400" x-text="(form.copy_curta || '').length + ' / 220'"></span>
+        </div>
+        <textarea name="copy_curta" rows="2" maxlength="220" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" x-model="form.copy_curta"><%= post.copy_curta || '' %></textarea>
+      </div>
+
+      <div>
+        <label class="block text-xs font-medium text-slate-600 mb-1">Hashtags (separadas por espaço)</label>
+        <input type="text" name="hashtags" value="<%= hashtagsValue %>" placeholder="#telemedicina #saude #atendevida" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" />
+      </div>
+
+      <div>
+        <label class="block text-xs font-medium text-slate-600 mb-1">CTA</label>
+        <input type="text" name="cta" value="<%= post.cta || '' %>" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" />
+      </div>
+    </div>
+  </div>
+
+  <aside class="space-y-4">
+    <div class="bg-white border border-slate-200 rounded-xl p-5 space-y-3">
+      <h3 class="font-semibold text-sm text-slate-900">Agendamento</h3>
+      <div>
+        <label class="block text-xs font-medium text-slate-600 mb-1">Data</label>
+        <input type="date" name="data_agendada" required value="<%= post.data_agendada %>" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" />
+      </div>
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="block text-xs font-medium text-slate-600 mb-1">Horário</label>
+          <input type="time" name="horario" required value="<%= post.horario ? post.horario.slice(0,5) : '07:00' %>" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" />
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-slate-600 mb-1">Janela</label>
+          <select name="janela" required class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm">
+            <option value="manha" <%= post.janela === 'manha' ? 'selected' : '' %>>Manhã</option>
+            <option value="almoco" <%= post.janela === 'almoco' ? 'selected' : '' %>>Almoço</option>
+            <option value="noite" <%= post.janela === 'noite' ? 'selected' : '' %>>Noite</option>
+          </select>
+        </div>
+      </div>
+      <div>
+        <label class="block text-xs font-medium text-slate-600 mb-1">Status</label>
+        <select name="status" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm">
+          <% ['rascunho','agendado','cancelado'].forEach(function(s){ %>
+            <option value="<%= s %>" <%= post.status === s ? 'selected' : '' %>><%= s %></option>
+          <% }); %>
+          <% if (!['rascunho','agendado','cancelado'].includes(post.status) && post.status) { %>
+            <option value="<%= post.status %>" selected disabled><%= post.status %></option>
+          <% } %>
+        </select>
+      </div>
+    </div>
+
+    <div class="bg-white border border-slate-200 rounded-xl p-5 space-y-3">
+      <h3 class="font-semibold text-sm text-slate-900">Mídia</h3>
+      <div>
+        <label class="block text-xs font-medium text-slate-600 mb-1">URL da imagem</label>
+        <input type="url" name="imagem_url" value="<%= post.imagem_url || '' %>" x-model="form.imagem_url" placeholder="https://..." class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" />
+        <div class="mt-2" x-show="form.imagem_url">
+          <img :src="form.imagem_url" class="w-full max-w-xs rounded-lg border border-slate-200" onerror="this.style.display='none'" />
+        </div>
+      </div>
+      <div>
+        <label class="block text-xs font-medium text-slate-600 mb-1">URL do vídeo (Reels)</label>
+        <input type="url" name="video_url" value="<%= post.video_url || '' %>" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" />
+      </div>
+      <div>
+        <label class="block text-xs font-medium text-slate-600 mb-1">Prompt da imagem</label>
+        <textarea name="imagem_prompt" rows="2" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"><%= post.imagem_prompt || '' %></textarea>
+      </div>
+    </div>
+
+    <div class="bg-white border border-slate-200 rounded-xl p-5 space-y-2">
+      <button type="submit" class="w-full rounded-lg bg-brand-600 hover:bg-brand-700 text-white text-sm font-medium py-2.5">
+        <%= isNew ? 'Criar post' : 'Salvar alterações' %>
+      </button>
+      <a href="<%= isNew ? '/dashboard/posts' : '/dashboard/posts/' + post.id %>" class="block text-center w-full rounded-lg border border-slate-200 text-slate-600 text-sm py-2.5 hover:bg-slate-50">
+        Cancelar
+      </a>
+    </div>
+  </aside>
+</form>

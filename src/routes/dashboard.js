@@ -61,6 +61,61 @@ router.get('/posts', async (req, res, next) => {
   }
 });
 
+router.get('/posts/new', (req, res) => {
+  const today = new Date().toISOString().split('T')[0];
+  const empty = {
+    id: null,
+    data_agendada: req.query.data || today,
+    horario: defaultHorarioFor(req.query.janela),
+    janela: req.query.janela || 'manha',
+    timezone: env.TZ,
+    pilar: 'educacao',
+    formato: 'estatico',
+    tema: '',
+    copy_principal: '',
+    copy_curta: '',
+    hashtags: [],
+    cta: 'Atendimento em minutos pelo link da bio',
+    imagem_url: '',
+    imagem_prompt: '',
+    video_url: '',
+    status: 'rascunho',
+  };
+  res.render('posts/form', {
+    title: 'Novo post',
+    pageTitle: 'Novo post',
+    pageSubtitle: 'Crie uma publicação para o calendário',
+    active: 'new',
+    post: empty,
+    isNew: true,
+    driveEnabled,
+  });
+});
+
+router.get('/posts/:id/edit', async (req, res, next) => {
+  try {
+    const post = await findById(req.params.id);
+    if (!post) return res.status(404).send('Post não encontrado');
+    res.render('posts/form', {
+      title: 'Editar post',
+      pageTitle: 'Editar post',
+      pageSubtitle: post.tema,
+      active: 'posts',
+      post,
+      isNew: false,
+      driveEnabled,
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+function defaultHorarioFor(janela) {
+  if (janela === 'almoco') return '12:00';
+  if (janela === 'noite') return '21:00';
+  return '07:00';
+}
+
 router.get('/posts/:id', async (req, res, next) => {
   try {
     const post = await findById(req.params.id);

@@ -15,6 +15,7 @@ import healthRoute from '#routes/health.js';
 import webhookRoute from '#routes/webhook.js';
 import authRoute from '#routes/auth.js';
 import dashboardRoute from '#routes/dashboard.js';
+import adminRoute from '#routes/admin.js';
 import apiRoute from '#routes/api.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -67,6 +68,7 @@ app.use('/webhook', webhookRoute);
 if (dashboardEnabled) {
   app.use('/', authRoute);
   app.use('/dashboard', requireAuth, dashboardRoute);
+  app.use('/admin', requireAuth, adminRoute);
   app.use('/api', requireAuth, apiRoute);
 
   app.get('/', (req, res) => {
