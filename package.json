@@ -13,21 +13,28 @@
     "lint": "eslint src tests scripts",
     "format": "prettier --write src tests scripts",
     "seed": "node scripts/seed-posts.js",
-    "test:meta-token": "node scripts/test-meta-token.js"
+    "test:meta-token": "node scripts/test-meta-token.js",
+    "hash-password": "node scripts/hash-password.js"
   },
   "imports": {
     "#config/*": "./src/config/*",
     "#lib/*": "./src/lib/*",
     "#services/*": "./src/services/*",
     "#jobs/*": "./src/jobs/*",
-    "#routes/*": "./src/routes/*"
+    "#routes/*": "./src/routes/*",
+    "#middleware/*": "./src/middleware/*"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.39.0",
     "@supabase/supabase-js": "^2.49.4",
     "axios": "^1.9.0",
+    "bcryptjs": "^3.0.3",
+    "cookie-session": "^2.1.1",
     "dotenv": "^16.5.0",
+    "ejs": "^5.0.2",
     "express": "^4.21.2",
+    "express-ejs-layouts": "^2.5.1",
+    "googleapis": "^171.4.0",
     "node-cron": "^3.0.3",
     "openai": "^4.96.0",
     "pino": "^9.7.0",

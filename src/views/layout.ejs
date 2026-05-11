@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="h-full bg-slate-50">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#0f172a" />
+    <title><%= typeof title !== 'undefined' ? title + ' — ' : '' %>Atendevida Growth</title>
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              brand: {
+                50:  '#ecfdf5',
+                100: '#d1fae5',
+                500: '#10b981',
+                600: '#059669',
+                700: '#047857',
+                900: '#064e3b',
+              },
+            },
+            fontFamily: {
+              sans: ['Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+            },
+          },
+        },
+      };
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <script defer src="/static/app.js"></script>
+  </head>
+  <body class="h-full font-sans text-slate-800 antialiased">
+    <% if (typeof hideChrome === 'undefined' || !hideChrome) { %>
+      <div class="flex h-full">
+        <%- include('partials/sidebar', { active: typeof active === 'undefined' ? '' : active }) %>
+        <div class="flex-1 flex flex-col min-w-0">
+          <header class="bg-white border-b border-slate-200 px-6 py-3 flex items-center justify-between">
+            <div>
+              <h1 class="text-lg font-semibold text-slate-900"><%= typeof pageTitle !== 'undefined' ? pageTitle : 'Dashboard' %></h1>
+              <% if (typeof pageSubtitle !== 'undefined' && pageSubtitle) { %>
+                <p class="text-xs text-slate-500"><%= pageSubtitle %></p>
+              <% } %>
+            </div>
+            <div class="flex items-center gap-3 text-sm">
+              <% if (locals.dryRun) { %>
+                <span class="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-amber-50 text-amber-700 text-xs font-medium border border-amber-200">
+                  <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span> DRY_RUN ativo
+                </span>
+              <% } %>
+              <% if (locals.user) { %>
+                <span class="text-slate-500"><%= locals.user.email %></span>
+                <form action="/logout" method="post">
+                  <button type="submit" class="text-slate-500 hover:text-slate-900">Sair</button>
+                </form>
+              <% } %>
+            </div>
+          </header>
+          <main class="flex-1 overflow-y-auto p-6">
+            <%- include('partials/flash') %>
+            <%- body %>
+          </main>
+        </div>
+      </div>
+    <% } else { %>
+      <%- include('partials/flash') %>
+      <%- body %>
+    <% } %>
+  </body>
+</html>

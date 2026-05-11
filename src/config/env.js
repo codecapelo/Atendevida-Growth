@@ -1,6 +1,26 @@
 import 'dotenv/config';
 import { z } from 'zod';
 
+const googleServiceAccountSchema = z
+  .string()
+  .optional()
+  .transform((raw, ctx) => {
+    if (!raw) return null;
+    try {
+      const parsed = JSON.parse(raw);
+      if (!parsed.client_email || !parsed.private_key) {
+        throw new Error('client_email e private_key são obrigatórios');
+      }
+      return parsed;
+    } catch (err) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: `GOOGLE_SERVICE_ACCOUNT_JSON inválido: ${err.message}`,
+      });
+      return z.NEVER;
+    }
+  });
+
 const schema = z
   .object({
     NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
@@ -40,6 +60,16 @@ const schema = z
       .string()
       .transform((v) => v === 'true')
       .default('false'),
+
+    // ─── Dashboard ─────────────────────────────────────────
+    DASHBOARD_EMAIL: z.string().email().optional(),
+    DASHBOARD_PASSWORD_HASH: z.string().optional(),
+    SESSION_SECRET: z.string().min(16).optional(),
+    PUBLIC_BASE_URL: z.string().url().optional(),
+
+    // ─── Google Drive ──────────────────────────────────────
+    GOOGLE_SERVICE_ACCOUNT_JSON: googleServiceAccountSchema,
+    GDRIVE_MEDIA_FOLDER_ID: z.string().optional(),
   })
   .refine(
     (data) => {
@@ -62,3 +92,11 @@ if (!parsed.success) {
 }
 
 export const env = parsed.data;
+
+export const dashboardEnabled = Boolean(
+  env.DASHBOARD_EMAIL && env.DASHBOARD_PASSWORD_HASH && env.SESSION_SECRET,
+);
+
+export const driveEnabled = Boolean(
+  env.GOOGLE_SERVICE_ACCOUNT_JSON && env.GDRIVE_MEDIA_FOLDER_ID,
+);
