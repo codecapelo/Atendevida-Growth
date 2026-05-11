@@ -1,0 +1,13 @@
+<%
+  const pilarMap = {
+    educacao:          { label: 'Educação',           cls: 'bg-indigo-50 text-indigo-700 border-indigo-200' },
+    casos_comuns:      { label: 'Casos comuns',       cls: 'bg-cyan-50 text-cyan-700 border-cyan-200' },
+    bastidores:        { label: 'Bastidores',         cls: 'bg-violet-50 text-violet-700 border-violet-200' },
+    mitos:             { label: 'Mitos',              cls: 'bg-fuchsia-50 text-fuchsia-700 border-fuchsia-200' },
+    renovacao_receita: { label: 'Renovação receita',  cls: 'bg-teal-50 text-teal-700 border-teal-200' },
+  };
+  const p = pilarMap[pilar] || { label: pilar, cls: 'bg-slate-50 text-slate-700 border-slate-200' };
+%>
+<span class="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium border <%= p.cls %>">
+  <%= p.label %>
+</span>
