@@ -64,38 +64,6 @@
       </div>
     <% } %>
 
-    <div x-data="{ confirm: false }" class="bg-white border border-slate-200 rounded-xl p-5 space-y-2">
-      <h3 class="font-semibold text-sm text-slate-900">Ações</h3>
-      <a href="/dashboard/posts/<%= post.id %>/edit" class="block text-center w-full rounded-lg bg-slate-900 text-white text-sm font-medium py-2 hover:bg-slate-800">Editar</a>
-
-      <% if (['rascunho','agendado','falhou'].includes(post.status)) { %>
-        <template x-if="!confirm">
-          <button type="button" @click="confirm = true" class="block w-full rounded-lg bg-brand-600 hover:bg-brand-700 text-white text-sm font-medium py-2">
-            Publicar agora
-          </button>
-        </template>
-        <template x-if="confirm">
-          <form method="post" action="/admin/posts/<%= post.id %>/publish-now" class="space-y-2">
-            <p class="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-md px-2 py-1.5">Confirma publicar este post agora no Instagram?</p>
-            <button type="submit" class="w-full rounded-lg bg-rose-600 hover:bg-rose-700 text-white text-sm font-medium py-2">Sim, publicar agora</button>
-            <button type="button" @click="confirm = false" class="w-full rounded-lg border border-slate-200 text-slate-600 text-sm py-2 hover:bg-slate-50">Cancelar</button>
-          </form>
-        </template>
-      <% } %>
-
-      <form method="post" action="/admin/posts/<%= post.id %>/duplicate">
-        <button type="submit" class="block w-full rounded-lg border border-slate-300 text-slate-700 text-sm font-medium py-2 hover:bg-slate-50">Duplicar</button>
-      </form>
-
-      <% if (post.status === 'agendado') { %>
-        <form method="post" action="/admin/posts/<%= post.id %>/cancel">
-          <button type="submit" class="block w-full rounded-lg border border-amber-300 text-amber-700 text-sm font-medium py-2 hover:bg-amber-50">Cancelar agendamento</button>
-        </form>
-      <% } %>
-
-      <form method="post" action="/admin/posts/<%= post.id %>/delete" onsubmit="return confirm('Deletar este post permanentemente?')">
-        <button type="submit" class="block w-full rounded-lg border border-rose-300 text-rose-700 text-sm font-medium py-2 hover:bg-rose-50">Deletar</button>
-      </form>
-    </div>
+    <%# Sidebar de ações (editar, publicar agora, duplicar, cancelar, deletar) entra nas PRs 3 e 6 quando as rotas existirem. %>
   </aside>
 </div>

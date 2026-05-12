@@ -1,4 +1,6 @@
 import { supabase } from '#services/supabase-client.js';
+import { todayInTz } from '#lib/date-tz.js';
+import { env } from '#config/env.js';
 
 const TABLE = 'atendevida_social_posts';
 
@@ -47,10 +49,8 @@ export async function remove(id) {
   if (error) throw error;
 }
 
-export async function statsForToday(timezone = 'America/Fortaleza') {
-  const today = new Date(new Date().toLocaleString('en-US', { timeZone: timezone }))
-    .toISOString()
-    .split('T')[0];
+export async function statsForToday(timezone = env.TZ) {
+  const today = todayInTz(timezone);
 
   const { data, error } = await supabase
     .from(TABLE)
@@ -73,8 +73,8 @@ export async function statsForToday(timezone = 'America/Fortaleza') {
   };
 }
 
-export async function upcoming({ limit = 10 } = {}) {
-  const today = new Date().toISOString().split('T')[0];
+export async function upcoming({ limit = 10, tz = env.TZ } = {}) {
+  const today = todayInTz(tz);
   const { data, error } = await supabase
     .from(TABLE)
     .select('*')
