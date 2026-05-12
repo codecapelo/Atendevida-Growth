@@ -32,8 +32,7 @@ router.post('/login', async (req, res) => {
 
   const emailMatch =
     typeof email === 'string' && email.toLowerCase() === env.DASHBOARD_EMAIL.toLowerCase();
-  const passwordMatch =
-    typeof password === 'string' && (await bcrypt.compare(password, env.DASHBOARD_PASSWORD_HASH));
+  const passwordMatch = await safeBcryptCompare(password, env.DASHBOARD_PASSWORD_HASH);
 
   if (!emailMatch || !passwordMatch) {
     logger.warn({ email }, 'Tentativa de login inválida');
@@ -51,6 +50,25 @@ router.post('/login', async (req, res) => {
 
   res.redirect(safeRedirectPath(nextUrl));
 });
+
+// bcrypt.compare lança se o hash configurado não estiver no formato esperado
+// (ex: operador colou a senha em claro em DASHBOARD_PASSWORD_HASH). Sem este
+// guard, o async handler quebra com 500 em vez de cair no fluxo normal de
+// "credenciais inválidas" e o log fica obscuro.
+async function safeBcryptCompare(plain, hash) {
+  if (typeof plain !== 'string' || typeof hash !== 'string' || hash.length === 0) {
+    return false;
+  }
+  try {
+    return await bcrypt.compare(plain, hash);
+  } catch (err) {
+    logger.error(
+      { err: err.message },
+      'DASHBOARD_PASSWORD_HASH inválido — gere com `npm run hash-password "<senha>"`',
+    );
+    return false;
+  }
+}
 
 // Aceita apenas paths internos (começa com "/" e não é protocol-relative
 // como "//evil.com" ou "/\\evil.com"). Caso contrário cai no dashboard.
