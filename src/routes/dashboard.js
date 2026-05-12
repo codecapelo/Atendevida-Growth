@@ -39,12 +39,12 @@ router.get('/', async (_req, res, next) => {
 router.get('/calendar', async (_req, res, next) => {
   try {
     const days = 7;
-    const posts = await calendarRange(days);
-
-    // Gera as datas no fuso de negócio (env.TZ) em vez de UTC.
-    // Sem isso, perto da meia-noite UTC o grid rolava pro dia seguinte
-    // — em America/Fortaleza isso acontece às 21h locais.
+    // Gera as datas no fuso de negócio (env.TZ) e usa o intervalo TZ-aware
+    // tanto para os headers do grid quanto para a query no banco — sem isso,
+    // perto da meia-noite UTC os headers diziam dia D e a query buscava
+    // posts de D+1, fazendo posts sumirem do calendário.
     const dates = nextDaysInBusinessTz(days, env.TZ);
+    const posts = await calendarRange({ from: dates[0], to: dates[dates.length - 1] });
 
     const grid = {};
     for (const date of dates) {
