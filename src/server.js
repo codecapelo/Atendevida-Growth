@@ -17,6 +17,7 @@ import authRoute from '#routes/auth.js';
 import dashboardRoute from '#routes/dashboard.js';
 import adminRoute from '#routes/admin.js';
 import apiRoute from '#routes/api.js';
+import mediaRoute from '#routes/media.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -70,6 +71,7 @@ app.use((_req, res, next) => {
 // ── Rotas públicas ──────────────────────────────────────────
 app.use('/health', healthRoute);
 app.use('/webhook', webhookRoute);
+app.use('/media', mediaRoute);
 
 // ── Dashboard (somente se configurado) ─────────────────────
 if (dashboardEnabled) {

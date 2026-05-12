@@ -91,6 +91,7 @@ router.get('/posts/new', (req, res) => {
     post: empty,
     isNew: true,
     driveEnabled,
+    publicBaseUrl: env.PUBLIC_BASE_URL ?? '',
   });
 });
 
@@ -106,6 +107,7 @@ router.get('/posts/:id/edit', async (req, res, next) => {
       post,
       isNew: false,
       driveEnabled,
+      publicBaseUrl: env.PUBLIC_BASE_URL ?? '',
     });
   } catch (err) {
     next(err);
