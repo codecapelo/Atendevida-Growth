@@ -1,0 +1,69 @@
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+  <div class="lg:col-span-2 space-y-4">
+    <div class="bg-white border border-slate-200 rounded-xl overflow-hidden">
+      <div class="px-5 py-3 border-b border-slate-200 flex items-center justify-between">
+        <h2 class="font-semibold text-sm text-slate-900">Preview do post</h2>
+        <%- include('../partials/status-badge', { status: post.status }) %>
+      </div>
+      <div class="p-5">
+        <% if (post.imagem_url) { %>
+          <img src="<%= post.imagem_url %>" alt="" class="w-full max-w-sm rounded-lg border border-slate-200 mb-4" onerror="this.style.display='none'" />
+        <% } %>
+        <div class="text-sm whitespace-pre-wrap text-slate-800 max-w-2xl"><%= post.copy_principal %></div>
+        <% if (post.hashtags && post.hashtags.length) { %>
+          <div class="mt-3 text-sm text-sky-700">
+            <% post.hashtags.forEach(function(h){ %>
+              <span class="mr-1"><%= h %></span>
+            <% }); %>
+          </div>
+        <% } %>
+        <% if (post.cta) { %>
+          <div class="mt-3 text-sm font-medium text-brand-700">→ <%= post.cta %></div>
+        <% } %>
+      </div>
+    </div>
+
+    <% if (post.erro_mensagem) { %>
+      <div class="bg-rose-50 border border-rose-200 rounded-xl p-4 text-sm text-rose-800">
+        <div class="font-medium mb-1">Erro na publicação</div>
+        <div class="font-mono text-xs"><%= post.erro_mensagem %></div>
+      </div>
+    <% } %>
+
+    <% if (post.instagram_permalink) { %>
+      <div class="bg-emerald-50 border border-emerald-200 rounded-xl p-4 text-sm">
+        <div class="font-medium text-emerald-800 mb-1">Publicado no Instagram</div>
+        <a href="<%= post.instagram_permalink %>" target="_blank" rel="noopener" class="text-emerald-700 underline break-all"><%= post.instagram_permalink %></a>
+      </div>
+    <% } %>
+  </div>
+
+  <aside class="space-y-4">
+    <div class="bg-white border border-slate-200 rounded-xl p-5 space-y-3">
+      <h3 class="font-semibold text-sm text-slate-900">Detalhes</h3>
+      <dl class="text-sm space-y-2">
+        <div class="flex justify-between"><dt class="text-slate-500">Data</dt><dd class="text-slate-800"><%= post.data_agendada %></dd></div>
+        <div class="flex justify-between"><dt class="text-slate-500">Horário</dt><dd class="text-slate-800"><%= post.horario.slice(0,5) %></dd></div>
+        <div class="flex justify-between"><dt class="text-slate-500">Janela</dt><dd class="capitalize text-slate-800"><%= post.janela %></dd></div>
+        <div class="flex justify-between"><dt class="text-slate-500">Pilar</dt><dd><%- include('../partials/pilar-badge', { pilar: post.pilar }) %></dd></div>
+        <div class="flex justify-between"><dt class="text-slate-500">Formato</dt><dd class="capitalize text-slate-800"><%= post.formato %></dd></div>
+        <% if (post.posted_at) { %>
+          <div class="flex justify-between"><dt class="text-slate-500">Publicado em</dt><dd class="text-slate-800 text-xs"><%= new Date(post.posted_at).toLocaleString('pt-BR') %></dd></div>
+        <% } %>
+      </dl>
+    </div>
+
+    <% if (post.metricas && Object.keys(post.metricas).length) { %>
+      <div class="bg-white border border-slate-200 rounded-xl p-5">
+        <h3 class="font-semibold text-sm text-slate-900 mb-2">Métricas</h3>
+        <dl class="text-sm space-y-1">
+          <% Object.entries(post.metricas).forEach(function([k,v]) { %>
+            <div class="flex justify-between"><dt class="text-slate-500 capitalize"><%= k %></dt><dd class="font-medium text-slate-800"><%= v %></dd></div>
+          <% }); %>
+        </dl>
+      </div>
+    <% } %>
+
+    <%# Sidebar de ações (editar, publicar agora, duplicar, cancelar, deletar) entra nas PRs 3 e 6 quando as rotas existirem. %>
+  </aside>
+</div>
