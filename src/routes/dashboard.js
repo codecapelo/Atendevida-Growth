@@ -211,8 +211,11 @@ function todayInBusinessTz(tz) {
   return `${y}-${m}-${d}`;
 }
 
-// Gera ISO dates (YYYY-MM-DD) para os próximos `n` dias projetados no
-// timezone de negócio. (Versão substituída pela DST-safe em fix posterior.)
+// Gera ISO dates (YYYY-MM-DD) para os próximos `n` dias a partir do
+// "hoje" no fuso de negócio. Itera componentes de data via Date.UTC
+// (que normaliza overflow: ano/mês/dia 32 vira mês seguinte etc),
+// sem somar 24h reais — assim DST não pula nem duplica datas em fusos
+// que observam horário de verão (ex: America/New_York).
 function nextDaysInBusinessTz(n, tz) {
   const fmt = new Intl.DateTimeFormat('en-CA', {
     timeZone: tz,
@@ -220,16 +223,17 @@ function nextDaysInBusinessTz(n, tz) {
     month: '2-digit',
     day: '2-digit',
   });
-  const base = new Date();
+  // Pega o calendar date local "hoje" no fuso alvo
+  const todayParts = fmt.formatToParts(new Date());
+  const y0 = Number(todayParts.find((p) => p.type === 'year').value);
+  const m0 = Number(todayParts.find((p) => p.type === 'month').value);
+  const d0 = Number(todayParts.find((p) => p.type === 'day').value);
+
   const out = [];
   for (let i = 0; i < n; i++) {
-    const d = new Date(base);
-    d.setUTCDate(base.getUTCDate() + i);
-    const parts = fmt.formatToParts(d);
-    const y = parts.find((p) => p.type === 'year').value;
-    const m = parts.find((p) => p.type === 'month').value;
-    const dd = parts.find((p) => p.type === 'day').value;
-    out.push(`${y}-${m}-${dd}`);
+    // Date.UTC normaliza dia 32→mês seguinte, mês 13→ano seguinte, etc.
+    const dt = new Date(Date.UTC(y0, m0 - 1, d0 + i));
+    out.push(dt.toISOString().slice(0, 10));
   }
   return out;
 }
