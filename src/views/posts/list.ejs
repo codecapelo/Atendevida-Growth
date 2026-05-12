@@ -1,0 +1,79 @@
+<div class="space-y-4">
+  <form method="get" class="bg-white border border-slate-200 rounded-xl p-4 flex flex-wrap gap-3 text-sm">
+    <select name="status" class="rounded-lg border border-slate-300 px-3 py-1.5">
+      <option value="">Todos os status</option>
+      <% ['rascunho','agendado','publicando','publicado','falhou','cancelado'].forEach(function(s){ %>
+        <option value="<%= s %>" <%= filters.status === s ? 'selected' : '' %>><%= s %></option>
+      <% }); %>
+    </select>
+    <select name="pilar" class="rounded-lg border border-slate-300 px-3 py-1.5">
+      <option value="">Todos os pilares</option>
+      <% ['educacao','casos_comuns','bastidores','mitos','renovacao_receita'].forEach(function(p){ %>
+        <option value="<%= p %>" <%= filters.pilar === p ? 'selected' : '' %>><%= p %></option>
+      <% }); %>
+    </select>
+    <select name="janela" class="rounded-lg border border-slate-300 px-3 py-1.5">
+      <option value="">Todas janelas</option>
+      <% ['manha','almoco','noite'].forEach(function(j){ %>
+        <option value="<%= j %>" <%= filters.janela === j ? 'selected' : '' %>><%= j %></option>
+      <% }); %>
+    </select>
+    <input type="date" name="from" value="<%= filters.from || '' %>" class="rounded-lg border border-slate-300 px-3 py-1.5" />
+    <input type="date" name="to" value="<%= filters.to || '' %>" class="rounded-lg border border-slate-300 px-3 py-1.5" />
+    <button type="submit" class="rounded-lg bg-slate-900 text-white px-3 py-1.5 text-xs font-medium">Filtrar</button>
+    <a href="/dashboard/posts" class="rounded-lg border border-slate-300 px-3 py-1.5 text-xs text-slate-600 hover:bg-slate-50">Limpar</a>
+    <span class="flex-1"></span>
+    <a href="/dashboard/posts/new" class="rounded-lg bg-brand-600 hover:bg-brand-700 text-white px-3 py-1.5 text-xs font-medium">+ Novo post</a>
+  </form>
+
+  <div class="bg-white border border-slate-200 rounded-xl overflow-hidden">
+    <% if (!rows.length) { %>
+      <div class="px-5 py-10 text-center text-sm text-slate-500">
+        Nenhum post encontrado com esses filtros.
+      </div>
+    <% } else { %>
+      <table class="w-full text-sm">
+        <thead class="text-xs text-slate-500 bg-slate-50 uppercase">
+          <tr>
+            <th class="text-left px-5 py-2 font-medium">Data</th>
+            <th class="text-left px-3 py-2 font-medium">Janela</th>
+            <th class="text-left px-3 py-2 font-medium">Pilar</th>
+            <th class="text-left px-3 py-2 font-medium">Formato</th>
+            <th class="text-left px-3 py-2 font-medium">Tema</th>
+            <th class="text-left px-3 py-2 font-medium">Status</th>
+            <th class="text-right px-5 py-2 font-medium">Ações</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% rows.forEach(function(p) { %>
+            <tr class="border-t border-slate-100 hover:bg-slate-50">
+              <td class="px-5 py-3 whitespace-nowrap text-slate-700"><%= p.data_agendada %></td>
+              <td class="px-3 py-3 text-slate-700 capitalize whitespace-nowrap"><%= p.janela %> · <%= p.horario.slice(0,5) %></td>
+              <td class="px-3 py-3"><%- include('../partials/pilar-badge', { pilar: p.pilar }) %></td>
+              <td class="px-3 py-3 text-slate-500 capitalize text-xs"><%= p.formato %></td>
+              <td class="px-3 py-3 text-slate-700 truncate max-w-md"><%= p.tema %></td>
+              <td class="px-3 py-3"><%- include('../partials/status-badge', { status: p.status }) %></td>
+              <td class="px-5 py-3 text-right whitespace-nowrap">
+                <a href="/dashboard/posts/<%= p.id %>" class="text-xs text-brand-700 hover:underline">Abrir</a>
+                <span class="text-slate-300 mx-1">·</span>
+                <a href="/dashboard/posts/<%= p.id %>/edit" class="text-xs text-slate-600 hover:underline">Editar</a>
+              </td>
+            </tr>
+          <% }); %>
+        </tbody>
+      </table>
+    <% } %>
+  </div>
+
+  <% if (pages > 1) { %>
+    <div class="flex justify-center gap-2 text-sm">
+      <% for (let i = 1; i <= pages; i++) { %>
+        <%
+          const q = new URLSearchParams(filters);
+          q.set('page', i);
+        %>
+        <a href="?<%= q.toString() %>" class="px-3 py-1 rounded-md <%= i === page ? 'bg-slate-900 text-white' : 'border border-slate-200 hover:bg-slate-50' %>"><%= i %></a>
+      <% } %>
+    </div>
+  <% } %>
+</div>

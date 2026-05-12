@@ -14,6 +14,9 @@ import { startMetricsCollector } from '#jobs/metrics-collector.js';
 import healthRoute from '#routes/health.js';
 import webhookRoute from '#routes/webhook.js';
 import authRoute from '#routes/auth.js';
+import dashboardRoute from '#routes/dashboard.js';
+import adminRoute from '#routes/admin.js';
+import apiRoute from '#routes/api.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -71,16 +74,9 @@ app.use('/webhook', webhookRoute);
 // ── Dashboard (somente se configurado) ─────────────────────
 if (dashboardEnabled) {
   app.use('/', authRoute);
-
-  // Placeholder /dashboard — substituído pelo home real nas próximas PRs
-  app.get('/dashboard', requireAuth, (_req, res) => {
-    res.render('home', {
-      title: 'Dashboard',
-      pageTitle: 'Visão geral',
-      pageSubtitle: 'Dashboard em construção — PR 1 (Foundation) está ativa.',
-      active: 'home',
-    });
-  });
+  app.use('/dashboard', requireAuth, dashboardRoute);
+  app.use('/admin', requireAuth, adminRoute);
+  app.use('/api', requireAuth, apiRoute);
 
   app.get('/', (req, res) => {
     res.redirect(req.session?.user ? '/dashboard' : '/login');

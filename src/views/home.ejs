@@ -1,7 +1,75 @@
-<div class="bg-white border border-slate-200 rounded-xl p-8 text-center">
-  <h2 class="text-lg font-semibold text-slate-900 mb-2">Foundation ativa ✓</h2>
-  <p class="text-sm text-slate-500">
-    Login, layout, sessão e middleware estão configurados.<br />
-    As próximas PRs adicionam KPIs, lista de posts, formulário e ações.
-  </p>
+<div x-data="dashboardStats({ initial: <%= JSON.stringify({ agendados: stats.agendados, publicados: stats.publicados, falhados: stats.falhados, publicando: stats.publicando }) %> })" class="space-y-6">
+
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+    <div class="bg-white border border-slate-200 rounded-xl p-4">
+      <div class="text-xs font-medium text-slate-500 uppercase tracking-wider">Agendados hoje</div>
+      <div class="mt-2 text-3xl font-semibold text-slate-900" x-text="data.agendados"></div>
+    </div>
+    <div class="bg-white border border-slate-200 rounded-xl p-4">
+      <div class="text-xs font-medium text-slate-500 uppercase tracking-wider">Publicados hoje</div>
+      <div class="mt-2 text-3xl font-semibold text-emerald-600" x-text="data.publicados"></div>
+    </div>
+    <div class="bg-white border border-slate-200 rounded-xl p-4">
+      <div class="text-xs font-medium text-slate-500 uppercase tracking-wider">Publicando agora</div>
+      <div class="mt-2 text-3xl font-semibold text-amber-600" x-text="data.publicando"></div>
+    </div>
+    <div class="bg-white border border-slate-200 rounded-xl p-4">
+      <div class="text-xs font-medium text-slate-500 uppercase tracking-wider">Falhados hoje</div>
+      <div class="mt-2 text-3xl font-semibold text-rose-600" x-text="data.falhados"></div>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div class="lg:col-span-2 bg-white border border-slate-200 rounded-xl">
+      <div class="px-5 py-3 border-b border-slate-200 flex items-center justify-between">
+        <h2 class="font-semibold text-slate-900 text-sm">Próximas publicações</h2>
+        <a href="/dashboard/posts" class="text-xs text-brand-700 hover:underline">Ver todos</a>
+      </div>
+      <% if (!upcoming.length) { %>
+        <div class="px-5 py-8 text-center text-sm text-slate-500">
+          Nenhum post agendado.
+          <a href="/dashboard/posts/new" class="text-brand-700 hover:underline">Criar novo →</a>
+        </div>
+      <% } else { %>
+        <table class="w-full text-sm">
+          <thead class="text-xs text-slate-500 bg-slate-50">
+            <tr>
+              <th class="text-left px-5 py-2 font-medium">Data</th>
+              <th class="text-left px-3 py-2 font-medium">Janela</th>
+              <th class="text-left px-3 py-2 font-medium">Pilar</th>
+              <th class="text-left px-3 py-2 font-medium">Tema</th>
+              <th class="text-right px-5 py-2 font-medium">Ações</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% upcoming.forEach(function(p) { %>
+              <tr class="border-t border-slate-100 hover:bg-slate-50">
+                <td class="px-5 py-3 whitespace-nowrap text-slate-700"><%= p.data_agendada %></td>
+                <td class="px-3 py-3 text-slate-700 capitalize"><%= p.janela %> · <%= p.horario.slice(0, 5) %></td>
+                <td class="px-3 py-3"><%- include('partials/pilar-badge', { pilar: p.pilar }) %></td>
+                <td class="px-3 py-3 text-slate-700 truncate max-w-md"><%= p.tema %></td>
+                <td class="px-5 py-3 text-right">
+                  <a href="/dashboard/posts/<%= p.id %>" class="text-brand-700 hover:underline text-xs">Abrir</a>
+                </td>
+              </tr>
+            <% }); %>
+          </tbody>
+        </table>
+      <% } %>
+    </div>
+
+    <div class="bg-white border border-slate-200 rounded-xl p-5 space-y-3">
+      <h2 class="font-semibold text-slate-900 text-sm">Sistema</h2>
+      <dl class="text-sm space-y-2">
+        <div class="flex justify-between"><dt class="text-slate-500">Provider LLM</dt><dd class="font-medium text-slate-800 capitalize"><%= llmProvider %></dd></div>
+        <div class="flex justify-between"><dt class="text-slate-500">Google Drive</dt><dd class="font-medium <%= driveEnabled ? 'text-emerald-700' : 'text-slate-400' %>"><%= driveEnabled ? 'conectado' : 'desativado' %></dd></div>
+        <div class="flex justify-between"><dt class="text-slate-500">Última coleta de métricas</dt><dd class="font-medium text-slate-800 text-xs">
+          <%= lastMetrics ? new Date(lastMetrics).toLocaleString('pt-BR') : '—' %>
+        </dd></div>
+      </dl>
+      <div class="pt-3 border-t border-slate-100 text-xs text-slate-400">
+        Atualiza automaticamente a cada 30s.
+      </div>
+    </div>
+  </div>
 </div>
