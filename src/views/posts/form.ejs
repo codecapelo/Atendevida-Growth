@@ -13,7 +13,7 @@
       <div class="grid grid-cols-2 gap-3">
         <div>
           <label class="block text-xs font-medium text-slate-600 mb-1">Pilar</label>
-          <select name="pilar" required class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm">
+          <select name="pilar" required x-model="form.pilar" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm">
             <% ['educacao','casos_comuns','bastidores','mitos','renovacao_receita'].forEach(function(p){ %>
               <option value="<%= p %>" <%= post.pilar === p ? 'selected' : '' %>><%= p %></option>
             <% }); %>
@@ -21,7 +21,7 @@
         </div>
         <div>
           <label class="block text-xs font-medium text-slate-600 mb-1">Formato</label>
-          <select name="formato" required class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm">
+          <select name="formato" required x-model="form.formato" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm">
             <% ['estatico','carrossel','reel','story'].forEach(function(f){ %>
               <option value="<%= f %>" <%= post.formato === f ? 'selected' : '' %>><%= f %></option>
             <% }); %>
@@ -31,7 +31,7 @@
 
       <div>
         <label class="block text-xs font-medium text-slate-600 mb-1">Tema</label>
-        <input type="text" name="tema" required maxlength="200" value="<%= post.tema || '' %>" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" />
+        <input type="text" name="tema" required maxlength="200" value="<%= post.tema || '' %>" x-model="form.tema" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" />
       </div>
 
       <div>
@@ -57,6 +57,20 @@
         <input type="text" name="cta" value="<%= post.cta || '' %>" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" />
       </div>
     </div>
+
+    <% if (!isNew) { %>
+      <div class="bg-white border border-slate-200 rounded-xl p-5">
+        <div class="flex items-center justify-between mb-2">
+          <div>
+            <h3 class="font-semibold text-sm text-slate-900">Refinar com IA</h3>
+            <p class="text-xs text-slate-500">Compara a copy atual com uma versão refinada pelo LLM antes de salvar.</p>
+          </div>
+          <button type="button" @click="openRefine()" class="rounded-lg border border-slate-300 text-slate-700 text-xs font-medium px-3 py-1.5 hover:bg-slate-50">
+            Refinar agora
+          </button>
+        </div>
+      </div>
+    <% } %>
   </div>
 
   <aside class="space-y-4">
@@ -131,5 +145,9 @@
 
   <% if (driveEnabled) { %>
     <%- include('../partials/drive-picker') %>
+  <% } %>
+
+  <% if (!isNew) { %>
+    <%- include('../partials/refine-modal') %>
   <% } %>
 </form>
