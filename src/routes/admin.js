@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { z } from 'zod';
 import { create, update, remove, findById } from '#services/post-repo.js';
 import { refineCaption } from '#services/caption-generator.js';
+import { runPostingJobForPost } from '#jobs/instagram-poster.js';
 import { flash } from '#lib/flash.js';
 import { logger } from '#lib/logger.js';
 import { env } from '#config/env.js';
@@ -154,6 +155,18 @@ router.post('/posts/:id/duplicate', async (req, res, next) => {
   } catch (err) {
     next(err);
   }
+});
+
+router.post('/posts/:id/publish-now', async (req, res) => {
+  const postId = req.params.id;
+  logger.info({ post_id: postId }, 'Publicação manual disparada');
+
+  runPostingJobForPost(postId, { force: true }).catch((err) => {
+    logger.error({ post_id: postId, err: err.message }, 'Falha na publicação manual');
+  });
+
+  flash(req, 'info', 'Publicação disparada. Atualize a página em alguns segundos para ver o resultado.');
+  res.redirect(`/dashboard/posts/${postId}`);
 });
 
 router.post('/posts/:id/refine', async (req, res) => {
