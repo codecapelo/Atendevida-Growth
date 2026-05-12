@@ -1,0 +1,30 @@
+<div
+  x-show="drivePickerOpen"
+  x-cloak
+  @keydown.escape.window="drivePickerOpen = false"
+  class="fixed inset-0 z-40 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4"
+  style="display: none;"
+>
+  <div class="bg-white rounded-xl shadow-xl max-w-3xl w-full max-h-[80vh] flex flex-col">
+    <div class="px-5 py-3 border-b border-slate-200 flex items-center justify-between">
+      <h3 class="font-semibold text-slate-900 text-sm">Selecionar imagem do Google Drive</h3>
+      <button type="button" @click="drivePickerOpen = false" class="text-slate-400 hover:text-slate-700">✕</button>
+    </div>
+    <div class="flex-1 overflow-y-auto p-4">
+      <div x-show="driveLoading" class="text-center py-8 text-sm text-slate-500">Carregando arquivos…</div>
+      <div x-show="!driveLoading && driveFiles.length === 0" class="text-center py-8 text-sm text-slate-500">Nenhum arquivo encontrado na pasta configurada.</div>
+      <div x-show="driveError" class="rounded-md border border-rose-200 bg-rose-50 text-rose-700 text-sm px-3 py-2 mb-3" x-text="driveError"></div>
+      <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+        <template x-for="file in driveFiles" :key="file.id">
+          <button type="button" @click="pickDriveFile(file)" class="text-left border border-slate-200 rounded-lg overflow-hidden hover:border-brand-500 hover:shadow-sm transition">
+            <div class="bg-slate-100 aspect-square flex items-center justify-center">
+              <img :src="file.thumbnailLink" :alt="file.name" class="w-full h-full object-cover" x-show="file.thumbnailLink" onerror="this.style.display='none'" />
+              <span x-show="!file.thumbnailLink" class="text-slate-400 text-xs">sem preview</span>
+            </div>
+            <div class="px-2 py-1.5 text-xs text-slate-700 truncate" x-text="file.name"></div>
+          </button>
+        </template>
+      </div>
+    </div>
+  </div>
+</div>
