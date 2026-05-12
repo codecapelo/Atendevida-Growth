@@ -20,6 +20,13 @@ const __dirname = path.dirname(__filename);
 
 const app = express();
 
+// Em produção rodamos atrás de um proxy TLS (Railway, Cloudflare, etc.).
+// Sem isso, `secure: true` no cookie-session bloqueia o set-cookie porque
+// o Express vê HTTP no socket interno.
+if (env.NODE_ENV === 'production') {
+  app.set('trust proxy', 1);
+}
+
 // ── View engine ─────────────────────────────────────────────
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'ejs');

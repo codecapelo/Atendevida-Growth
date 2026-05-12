@@ -49,9 +49,17 @@ router.post('/login', async (req, res) => {
   flash(req, 'success', 'Bem-vindo de volta!');
   logger.info({ email }, 'Login bem-sucedido');
 
-  const safeNext = typeof nextUrl === 'string' && nextUrl.startsWith('/') ? nextUrl : '/dashboard';
-  res.redirect(safeNext);
+  res.redirect(safeRedirectPath(nextUrl));
 });
+
+// Aceita apenas paths internos (começa com "/" e não é protocol-relative
+// como "//evil.com" ou "/\\evil.com"). Caso contrário cai no dashboard.
+function safeRedirectPath(value) {
+  if (typeof value !== 'string') return '/dashboard';
+  if (!value.startsWith('/')) return '/dashboard';
+  if (value.startsWith('//') || value.startsWith('/\\')) return '/dashboard';
+  return value;
+}
 
 router.post('/logout', (req, res) => {
   req.session = null;
