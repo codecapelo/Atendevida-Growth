@@ -1,10 +1,19 @@
 import 'dotenv/config';
 import { z } from 'zod';
 
-const googleServiceAccountSchema = z
-  .string()
-  .optional()
-  .transform((raw, ctx) => {
+// Strings vazias em process.env (vindas de chaves sem valor no .env, ex:
+// `SESSION_SECRET=` no .env.example) precisam virar undefined antes da
+// validação — `.optional()` só aceita undefined, e "" faria .min/.email/.url
+// falhar e bloquear o boot do worker.
+const optionalString = (inner) =>
+  z.preprocess((v) => (typeof v === 'string' && v.trim() === '' ? undefined : v), inner.optional());
+
+const googleServiceAccountSchema = z.preprocess(
+  (v) => (typeof v === 'string' && v.trim() === '' ? undefined : v),
+  z
+    .string()
+    .optional()
+    .transform((raw, ctx) => {
     if (!raw) return null;
     try {
       const parsed = JSON.parse(raw);
@@ -19,7 +28,8 @@ const googleServiceAccountSchema = z
       });
       return z.NEVER;
     }
-  });
+  }),
+);
 
 const schema = z
   .object({
@@ -32,10 +42,10 @@ const schema = z
 
     LLM_PROVIDER: z.enum(['anthropic', 'openai']).default('anthropic'),
 
-    ANTHROPIC_API_KEY: z.string().optional(),
+    ANTHROPIC_API_KEY: optionalString(z.string()),
     ANTHROPIC_MODEL: z.string().default('claude-sonnet-4-20250514'),
 
-    OPENAI_API_KEY: z.string().optional(),
+    OPENAI_API_KEY: optionalString(z.string()),
     OPENAI_MODEL: z.string().default('gpt-4o'),
 
     META_ACCESS_TOKEN: z.string().min(1),
@@ -62,14 +72,14 @@ const schema = z
       .default('false'),
 
     // ─── Dashboard ─────────────────────────────────────────
-    DASHBOARD_EMAIL: z.string().email().optional(),
-    DASHBOARD_PASSWORD_HASH: z.string().optional(),
-    SESSION_SECRET: z.string().min(16).optional(),
-    PUBLIC_BASE_URL: z.string().url().optional(),
+    DASHBOARD_EMAIL: optionalString(z.string().email()),
+    DASHBOARD_PASSWORD_HASH: optionalString(z.string()),
+    SESSION_SECRET: optionalString(z.string().min(16)),
+    PUBLIC_BASE_URL: optionalString(z.string().url()),
 
     // ─── Google Drive ──────────────────────────────────────
     GOOGLE_SERVICE_ACCOUNT_JSON: googleServiceAccountSchema,
-    GDRIVE_MEDIA_FOLDER_ID: z.string().optional(),
+    GDRIVE_MEDIA_FOLDER_ID: optionalString(z.string()),
   })
   .refine(
     (data) => {
