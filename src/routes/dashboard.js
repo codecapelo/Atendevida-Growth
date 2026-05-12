@@ -62,7 +62,9 @@ router.get('/posts', async (req, res, next) => {
 });
 
 router.get('/posts/new', (req, res) => {
-  const today = new Date().toISOString().split('T')[0];
+  // Default da data precisa estar no fuso de negócio. toISOString() retorna
+  // UTC e perto da meia-noite UTC mostra o dia seguinte como sugestão.
+  const today = todayInBusinessTz(env.TZ);
   const empty = {
     id: null,
     data_agendada: req.query.data || today,
@@ -114,6 +116,22 @@ function defaultHorarioFor(janela) {
   if (janela === 'almoco') return '12:00';
   if (janela === 'noite') return '21:00';
   return '07:00';
+}
+
+// Retorna o ISO date (YYYY-MM-DD) "hoje" no fuso informado, via
+// Intl.DateTimeFormat — evita o drift de toISOString().split('T')[0]
+// que devolve dia em UTC.
+function todayInBusinessTz(tz) {
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: tz,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).formatToParts(new Date());
+  const y = parts.find((p) => p.type === 'year').value;
+  const m = parts.find((p) => p.type === 'month').value;
+  const d = parts.find((p) => p.type === 'day').value;
+  return `${y}-${m}-${d}`;
 }
 
 router.get('/posts/:id', async (req, res, next) => {
