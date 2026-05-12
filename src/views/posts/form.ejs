@@ -57,6 +57,20 @@
         <input type="text" name="cta" value="<%= post.cta || '' %>" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" />
       </div>
     </div>
+
+    <% if (!isNew) { %>
+      <div class="bg-white border border-slate-200 rounded-xl p-5">
+        <div class="flex items-center justify-between mb-2">
+          <div>
+            <h3 class="font-semibold text-sm text-slate-900">Refinar com IA</h3>
+            <p class="text-xs text-slate-500">Compara a copy atual com uma versão refinada pelo LLM antes de salvar.</p>
+          </div>
+          <button type="button" @click="openRefine()" class="rounded-lg border border-slate-300 text-slate-700 text-xs font-medium px-3 py-1.5 hover:bg-slate-50">
+            Refinar agora
+          </button>
+        </div>
+      </div>
+    <% } %>
   </div>
 
   <aside class="space-y-4">
@@ -131,5 +145,9 @@
 
   <% if (driveEnabled) { %>
     <%- include('../partials/drive-picker') %>
+  <% } %>
+
+  <% if (!isNew) { %>
+    <%- include('../partials/refine-modal') %>
   <% } %>
 </form>

@@ -1,7 +1,9 @@
 import { Router } from 'express';
 import { z } from 'zod';
 import { create, update, remove, findById } from '#services/post-repo.js';
+import { refineCaption } from '#services/caption-generator.js';
 import { flash } from '#lib/flash.js';
+import { logger } from '#lib/logger.js';
 import { env } from '#config/env.js';
 
 const router = Router();
@@ -151,6 +153,25 @@ router.post('/posts/:id/duplicate', async (req, res, next) => {
     res.redirect(`/dashboard/posts/${created.id}/edit`);
   } catch (err) {
     next(err);
+  }
+});
+
+router.post('/posts/:id/refine', async (req, res) => {
+  try {
+    const draft = {
+      id: req.params.id,
+      tema: req.body.tema,
+      pilar: req.body.pilar,
+      formato: req.body.formato,
+      copy_principal: req.body.copy_principal,
+      copy_curta: req.body.copy_curta,
+      hashtags: Array.isArray(req.body.hashtags) ? req.body.hashtags : [],
+    };
+    const result = await refineCaption(draft);
+    res.json(result);
+  } catch (err) {
+    logger.error({ err: err.message }, 'Erro ao refinar com IA');
+    res.status(502).json({ error: err.message });
   }
 });
 
