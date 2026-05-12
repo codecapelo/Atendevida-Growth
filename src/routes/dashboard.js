@@ -41,13 +41,10 @@ router.get('/calendar', async (_req, res, next) => {
     const days = 7;
     const posts = await calendarRange(days);
 
-    const dates = [];
-    const today = new Date();
-    for (let i = 0; i < days; i++) {
-      const d = new Date(today);
-      d.setDate(today.getDate() + i);
-      dates.push(d.toISOString().split('T')[0]);
-    }
+    // Gera as datas no fuso de negócio (env.TZ) em vez de UTC.
+    // Sem isso, perto da meia-noite UTC o grid rolava pro dia seguinte
+    // — em America/Fortaleza isso acontece às 21h locais.
+    const dates = nextDaysInBusinessTz(days, env.TZ);
 
     const grid = {};
     for (const date of dates) {
@@ -74,8 +71,12 @@ router.get('/calendar', async (_req, res, next) => {
 
 router.get('/metrics', async (_req, res, next) => {
   try {
-    const top = await topByReach({ days: 30, limit: 15 });
-    const totals = top.reduce(
+    // Buscamos todos os posts dos últimos 30 dias para agregar totais
+    // corretos (somar só os top 15 subreporta quando há mais de 15
+    // publicações no período).
+    const allLast30 = await topByReach({ days: 30, limit: 10_000 });
+    const top = allLast30.slice(0, 15);
+    const totals = allLast30.reduce(
       (acc, r) => {
         const m = r.metricas || {};
         acc.impressions += m.impressions ?? 0;
@@ -208,6 +209,29 @@ function todayInBusinessTz(tz) {
   const m = parts.find((p) => p.type === 'month').value;
   const d = parts.find((p) => p.type === 'day').value;
   return `${y}-${m}-${d}`;
+}
+
+// Gera ISO dates (YYYY-MM-DD) para os próximos `n` dias projetados no
+// timezone de negócio. (Versão substituída pela DST-safe em fix posterior.)
+function nextDaysInBusinessTz(n, tz) {
+  const fmt = new Intl.DateTimeFormat('en-CA', {
+    timeZone: tz,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  });
+  const base = new Date();
+  const out = [];
+  for (let i = 0; i < n; i++) {
+    const d = new Date(base);
+    d.setUTCDate(base.getUTCDate() + i);
+    const parts = fmt.formatToParts(d);
+    const y = parts.find((p) => p.type === 'year').value;
+    const m = parts.find((p) => p.type === 'month').value;
+    const dd = parts.find((p) => p.type === 'day').value;
+    out.push(`${y}-${m}-${dd}`);
+  }
+  return out;
 }
 
 router.get('/posts/:id', async (req, res, next) => {
