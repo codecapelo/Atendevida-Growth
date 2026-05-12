@@ -20,7 +20,9 @@ const postSchema = z.object({
   imagem_url: z.string().url().optional().or(z.literal('')),
   imagem_prompt: z.string().optional().nullable(),
   video_url: z.string().url().optional().or(z.literal('')),
-  status: z.enum(['rascunho', 'agendado', 'cancelado']).default('rascunho'),
+  status: z
+    .enum(['rascunho', 'agendado', 'cancelado', 'publicando', 'publicado', 'falhou'])
+    .default('rascunho'),
 });
 
 function parseHashtags(raw) {
@@ -71,7 +73,8 @@ router.post('/posts', async (req, res, next) => {
 router.post('/posts/:id', async (req, res, next) => {
   try {
     const values = normalize(req.body);
-    await update(req.params.id, values);
+    const updated = await update(req.params.id, values);
+    if (!updated) return res.status(404).send('Post não encontrado');
     flash(req, 'success', 'Post atualizado.');
     res.redirect(`/dashboard/posts/${req.params.id}`);
   } catch (err) {
@@ -85,7 +88,8 @@ router.post('/posts/:id', async (req, res, next) => {
 
 router.post('/posts/:id/delete', async (req, res, next) => {
   try {
-    await remove(req.params.id);
+    const ok = await remove(req.params.id);
+    if (!ok) return res.status(404).send('Post não encontrado');
     flash(req, 'success', 'Post deletado.');
     res.redirect('/dashboard/posts');
   } catch (err) {
@@ -95,7 +99,8 @@ router.post('/posts/:id/delete', async (req, res, next) => {
 
 router.post('/posts/:id/cancel', async (req, res, next) => {
   try {
-    await update(req.params.id, { status: 'cancelado' });
+    const updated = await update(req.params.id, { status: 'cancelado' });
+    if (!updated) return res.status(404).send('Post não encontrado');
     flash(req, 'success', 'Post cancelado.');
     res.redirect(`/dashboard/posts/${req.params.id}`);
   } catch (err) {

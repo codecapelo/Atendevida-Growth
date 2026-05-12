@@ -40,13 +40,19 @@ export async function update(id, values) {
     .eq('id', id)
     .select('*')
     .single();
+  if (error?.code === 'PGRST116') return null; // linha não encontrada
   if (error) throw error;
   return data;
 }
 
 export async function remove(id) {
-  const { error } = await supabase.from(TABLE).delete().eq('id', id);
+  const { data, error } = await supabase
+    .from(TABLE)
+    .delete()
+    .eq('id', id)
+    .select('id');
   if (error) throw error;
+  return (data ?? []).length > 0;
 }
 
 export async function statsForToday(timezone = env.TZ) {

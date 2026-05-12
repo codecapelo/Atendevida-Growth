@@ -83,12 +83,12 @@
       <div>
         <label class="block text-xs font-medium text-slate-600 mb-1">Status</label>
         <select name="status" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm">
-          <% ['rascunho','agendado','cancelado'].forEach(function(s){ %>
+          <%# Lista todos os status. Browser não submete <option disabled>, então
+              renderizar terminais como disabled reclassificaria o post via default
+              do Zod. Aqui o status atual sempre vai como selected e submittable. %>
+          <% ['rascunho','agendado','cancelado','publicando','publicado','falhou'].forEach(function(s){ %>
             <option value="<%= s %>" <%= post.status === s ? 'selected' : '' %>><%= s %></option>
           <% }); %>
-          <% if (!['rascunho','agendado','cancelado'].includes(post.status) && post.status) { %>
-            <option value="<%= post.status %>" selected disabled><%= post.status %></option>
-          <% } %>
         </select>
       </div>
     </div>
