@@ -6,9 +6,29 @@ import { env } from '#config/env.js';
 
 const router = Router();
 
+// Regex só valida formato; "2026-02-31" passa. Refine constrói o Date
+// e confirma que os componentes voltam idênticos (sem rollover).
+const isoDateSchema = z
+  .string()
+  .regex(/^\d{4}-\d{2}-\d{2}$/, 'Data deve estar em YYYY-MM-DD')
+  .refine((s) => {
+    const [y, m, d] = s.split('-').map(Number);
+    const dt = new Date(Date.UTC(y, m - 1, d));
+    return (
+      dt.getUTCFullYear() === y &&
+      dt.getUTCMonth() === m - 1 &&
+      dt.getUTCDate() === d
+    );
+  }, 'Data inexistente no calendário');
+
+// Hora real (00..23 : 00..59 [: 00..59]).
+const timeSchema = z
+  .string()
+  .regex(/^([01]\d|2[0-3]):[0-5]\d(:[0-5]\d)?$/, 'Horário deve estar em HH:MM ou HH:MM:SS (24h)');
+
 const postSchema = z.object({
-  data_agendada: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
-  horario: z.string().regex(/^\d{2}:\d{2}(:\d{2})?$/),
+  data_agendada: isoDateSchema,
+  horario: timeSchema,
   janela: z.enum(['manha', 'almoco', 'noite']),
   pilar: z.enum(['educacao', 'casos_comuns', 'bastidores', 'mitos', 'renovacao_receita']),
   formato: z.enum(['estatico', 'carrossel', 'reel', 'story']),
@@ -69,6 +89,17 @@ router.post('/posts', async (req, res, next) => {
     next(err);
   }
 });
+
+// Bate antes de qualquer chamada ao Supabase: ID malformado retorna 400
+// em vez de virar 500 via cast error do Postgres (22P02).
+const UUID_RX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+function requireValidId(req, res, next) {
+  if (!UUID_RX.test(req.params.id ?? '')) {
+    return res.status(400).send('ID de post inválido');
+  }
+  next();
+}
+router.use('/posts/:id', requireValidId);
 
 router.post('/posts/:id', async (req, res, next) => {
   try {
