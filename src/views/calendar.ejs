@@ -1,0 +1,55 @@
+<%
+  const janelas = [
+    { key: 'manha', label: 'Manhã', time: '07:00' },
+    { key: 'almoco', label: 'Almoço', time: '12:00' },
+    { key: 'noite', label: 'Noite', time: '21:00' },
+  ];
+  function weekdayLabel(iso) {
+    const d = new Date(iso + 'T12:00:00');
+    return d.toLocaleDateString('pt-BR', { weekday: 'short', day: '2-digit', month: 'short' });
+  }
+%>
+<div class="space-y-4">
+  <div class="bg-white border border-slate-200 rounded-xl overflow-hidden">
+    <table class="w-full">
+      <thead class="bg-slate-50 text-xs text-slate-500 uppercase">
+        <tr>
+          <th class="px-4 py-3 text-left font-medium w-32">Janela</th>
+          <% dates.forEach(function(d) { %>
+            <th class="px-3 py-3 text-left font-medium">
+              <div class="text-slate-900 normal-case font-semibold"><%= weekdayLabel(d) %></div>
+            </th>
+          <% }); %>
+        </tr>
+      </thead>
+      <tbody>
+        <% janelas.forEach(function(j) { %>
+          <tr class="border-t border-slate-100">
+            <td class="px-4 py-3 align-top">
+              <div class="font-medium text-slate-900 text-sm"><%= j.label %></div>
+              <div class="text-xs text-slate-400"><%= j.time %></div>
+            </td>
+            <% dates.forEach(function(d) { %>
+              <td class="px-2 py-2 align-top w-1/7">
+                <% const post = grid[d][j.key]; %>
+                <% if (post) { %>
+                  <a href="/dashboard/posts/<%= post.id %>" class="block rounded-lg border border-slate-200 hover:border-brand-500 hover:shadow-sm transition p-3 bg-white">
+                    <div class="flex items-center justify-between mb-2">
+                      <%- include('partials/pilar-badge', { pilar: post.pilar }) %>
+                      <%- include('partials/status-badge', { status: post.status }) %>
+                    </div>
+                    <div class="text-xs text-slate-700 line-clamp-3"><%= post.tema %></div>
+                  </a>
+                <% } else { %>
+                  <a href="/dashboard/posts/new?data=<%= d %>&janela=<%= j.key %>" class="block rounded-lg border border-dashed border-slate-200 hover:border-brand-500 hover:bg-brand-50/30 transition px-3 py-4 text-center text-xs text-slate-400 hover:text-brand-700">
+                    + Agendar
+                  </a>
+                <% } %>
+              </td>
+            <% }); %>
+          </tr>
+        <% }); %>
+      </tbody>
+    </table>
+  </div>
+</div>

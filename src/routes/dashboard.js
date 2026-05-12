@@ -1,6 +1,15 @@
 import { Router } from 'express';
-import { findById, list, statsForToday, upcoming, lastMetricsCollection } from '#services/post-repo.js';
+import {
+  findById,
+  list,
+  statsForToday,
+  upcoming,
+  lastMetricsCollection,
+  calendarRange,
+  topByReach,
+} from '#services/post-repo.js';
 import { env, driveEnabled } from '#config/env.js';
+import { logger } from '#lib/logger.js';
 
 const router = Router();
 
@@ -23,6 +32,71 @@ router.get('/', async (_req, res, next) => {
       llmProvider: env.LLM_PROVIDER,
     });
   } catch (err) {
+    next(err);
+  }
+});
+
+router.get('/calendar', async (_req, res, next) => {
+  try {
+    const days = 7;
+    const posts = await calendarRange(days);
+
+    const dates = [];
+    const today = new Date();
+    for (let i = 0; i < days; i++) {
+      const d = new Date(today);
+      d.setDate(today.getDate() + i);
+      dates.push(d.toISOString().split('T')[0]);
+    }
+
+    const grid = {};
+    for (const date of dates) {
+      grid[date] = { manha: null, almoco: null, noite: null };
+    }
+    for (const p of posts) {
+      if (grid[p.data_agendada] && grid[p.data_agendada][p.janela] === null) {
+        grid[p.data_agendada][p.janela] = p;
+      }
+    }
+
+    res.render('calendar', {
+      title: 'Calendário',
+      pageTitle: 'Calendário',
+      pageSubtitle: 'Próximos 7 dias por janela',
+      active: 'calendar',
+      dates,
+      grid,
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.get('/metrics', async (_req, res, next) => {
+  try {
+    const top = await topByReach({ days: 30, limit: 15 });
+    const totals = top.reduce(
+      (acc, r) => {
+        const m = r.metricas || {};
+        acc.impressions += m.impressions ?? 0;
+        acc.reach += m.reach ?? 0;
+        acc.likes += m.likes ?? 0;
+        acc.saved += m.saved ?? 0;
+        acc.comments += m.comments ?? 0;
+        return acc;
+      },
+      { impressions: 0, reach: 0, likes: 0, saved: 0, comments: 0 },
+    );
+    res.render('metrics', {
+      title: 'Métricas',
+      pageTitle: 'Métricas',
+      pageSubtitle: 'Top posts por alcance — últimos 30 dias',
+      active: 'metrics',
+      top,
+      totals,
+    });
+  } catch (err) {
+    logger.error({ err: err.message }, 'Erro ao carregar métricas');
     next(err);
   }
 });

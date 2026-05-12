@@ -1,0 +1,50 @@
+<div class="space-y-6">
+  <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
+    <% Object.entries(totals).forEach(function([k,v]) { %>
+      <div class="bg-white border border-slate-200 rounded-xl p-4">
+        <div class="text-xs font-medium text-slate-500 uppercase tracking-wider"><%= k %></div>
+        <div class="mt-1 text-2xl font-semibold text-slate-900"><%= v.toLocaleString('pt-BR') %></div>
+      </div>
+    <% }); %>
+  </div>
+
+  <div class="bg-white border border-slate-200 rounded-xl overflow-hidden">
+    <div class="px-5 py-3 border-b border-slate-200">
+      <h2 class="font-semibold text-sm text-slate-900">Top posts por alcance</h2>
+    </div>
+    <% if (!top.length) { %>
+      <div class="px-5 py-8 text-center text-sm text-slate-500">Sem métricas coletadas ainda.</div>
+    <% } else { %>
+      <table class="w-full text-sm">
+        <thead class="text-xs text-slate-500 bg-slate-50 uppercase">
+          <tr>
+            <th class="px-5 py-2 text-left font-medium">Tema</th>
+            <th class="px-3 py-2 text-left font-medium">Pilar</th>
+            <th class="px-3 py-2 text-right font-medium">Reach</th>
+            <th class="px-3 py-2 text-right font-medium">Impressions</th>
+            <th class="px-3 py-2 text-right font-medium">Likes</th>
+            <th class="px-3 py-2 text-right font-medium">Saved</th>
+            <th class="px-5 py-2 text-right font-medium">Link</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% top.forEach(function(p) { %>
+            <tr class="border-t border-slate-100">
+              <td class="px-5 py-2 text-slate-700 truncate max-w-md"><a href="/dashboard/posts/<%= p.id %>" class="hover:underline"><%= p.tema %></a></td>
+              <td class="px-3 py-2"><%- include('partials/pilar-badge', { pilar: p.pilar }) %></td>
+              <td class="px-3 py-2 text-right font-medium"><%= (p.metricas?.reach ?? 0).toLocaleString('pt-BR') %></td>
+              <td class="px-3 py-2 text-right text-slate-600"><%= (p.metricas?.impressions ?? 0).toLocaleString('pt-BR') %></td>
+              <td class="px-3 py-2 text-right text-slate-600"><%= (p.metricas?.likes ?? 0).toLocaleString('pt-BR') %></td>
+              <td class="px-3 py-2 text-right text-slate-600"><%= (p.metricas?.saved ?? 0).toLocaleString('pt-BR') %></td>
+              <td class="px-5 py-2 text-right">
+                <% if (p.instagram_permalink) { %>
+                  <a href="<%= p.instagram_permalink %>" target="_blank" rel="noopener" class="text-brand-700 hover:underline text-xs">abrir ↗</a>
+                <% } %>
+              </td>
+            </tr>
+          <% }); %>
+        </tbody>
+      </table>
+    <% } %>
+  </div>
+</div>
