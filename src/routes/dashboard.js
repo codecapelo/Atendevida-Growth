@@ -1,6 +1,15 @@
 import { Router } from 'express';
-import { findById, list, statsForToday, upcoming, lastMetricsCollection } from '#services/post-repo.js';
+import {
+  findById,
+  list,
+  statsForToday,
+  upcoming,
+  lastMetricsCollection,
+  calendarRange,
+  topByReach,
+} from '#services/post-repo.js';
 import { env, driveEnabled } from '#config/env.js';
+import { logger } from '#lib/logger.js';
 
 const router = Router();
 
@@ -23,6 +32,72 @@ router.get('/', async (_req, res, next) => {
       llmProvider: env.LLM_PROVIDER,
     });
   } catch (err) {
+    next(err);
+  }
+});
+
+router.get('/calendar', async (_req, res, next) => {
+  try {
+    const days = 7;
+    // Gera as datas no fuso de negócio (env.TZ) e usa o intervalo TZ-aware
+    // tanto para os headers do grid quanto para a query no banco — sem isso,
+    // perto da meia-noite UTC os headers diziam dia D e a query buscava
+    // posts de D+1, fazendo posts sumirem do calendário.
+    const dates = nextDaysInBusinessTz(days, env.TZ);
+    const posts = await calendarRange({ from: dates[0], to: dates[dates.length - 1] });
+
+    const grid = {};
+    for (const date of dates) {
+      grid[date] = { manha: null, almoco: null, noite: null };
+    }
+    for (const p of posts) {
+      if (grid[p.data_agendada] && grid[p.data_agendada][p.janela] === null) {
+        grid[p.data_agendada][p.janela] = p;
+      }
+    }
+
+    res.render('calendar', {
+      title: 'Calendário',
+      pageTitle: 'Calendário',
+      pageSubtitle: 'Próximos 7 dias por janela',
+      active: 'calendar',
+      dates,
+      grid,
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.get('/metrics', async (_req, res, next) => {
+  try {
+    // Buscamos todos os posts dos últimos 30 dias para agregar totais
+    // corretos (somar só os top 15 subreporta quando há mais de 15
+    // publicações no período).
+    const allLast30 = await topByReach({ days: 30, limit: 10_000 });
+    const top = allLast30.slice(0, 15);
+    const totals = allLast30.reduce(
+      (acc, r) => {
+        const m = r.metricas || {};
+        acc.impressions += m.impressions ?? 0;
+        acc.reach += m.reach ?? 0;
+        acc.likes += m.likes ?? 0;
+        acc.saved += m.saved ?? 0;
+        acc.comments += m.comments ?? 0;
+        return acc;
+      },
+      { impressions: 0, reach: 0, likes: 0, saved: 0, comments: 0 },
+    );
+    res.render('metrics', {
+      title: 'Métricas',
+      pageTitle: 'Métricas',
+      pageSubtitle: 'Top posts por alcance — últimos 30 dias',
+      active: 'metrics',
+      top,
+      totals,
+    });
+  } catch (err) {
+    logger.error({ err: err.message }, 'Erro ao carregar métricas');
     next(err);
   }
 });
@@ -134,6 +209,33 @@ function todayInBusinessTz(tz) {
   const m = parts.find((p) => p.type === 'month').value;
   const d = parts.find((p) => p.type === 'day').value;
   return `${y}-${m}-${d}`;
+}
+
+// Gera ISO dates (YYYY-MM-DD) para os próximos `n` dias a partir do
+// "hoje" no fuso de negócio. Itera componentes de data via Date.UTC
+// (que normaliza overflow: ano/mês/dia 32 vira mês seguinte etc),
+// sem somar 24h reais — assim DST não pula nem duplica datas em fusos
+// que observam horário de verão (ex: America/New_York).
+function nextDaysInBusinessTz(n, tz) {
+  const fmt = new Intl.DateTimeFormat('en-CA', {
+    timeZone: tz,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  });
+  // Pega o calendar date local "hoje" no fuso alvo
+  const todayParts = fmt.formatToParts(new Date());
+  const y0 = Number(todayParts.find((p) => p.type === 'year').value);
+  const m0 = Number(todayParts.find((p) => p.type === 'month').value);
+  const d0 = Number(todayParts.find((p) => p.type === 'day').value);
+
+  const out = [];
+  for (let i = 0; i < n; i++) {
+    // Date.UTC normaliza dia 32→mês seguinte, mês 13→ano seguinte, etc.
+    const dt = new Date(Date.UTC(y0, m0 - 1, d0 + i));
+    out.push(dt.toISOString().slice(0, 10));
+  }
+  return out;
 }
 
 router.get('/posts/:id', async (req, res, next) => {

@@ -115,13 +115,26 @@ export async function topByReach({ days = 30, limit = 10 } = {}) {
   return rows;
 }
 
-export async function calendarRange(days = 7) {
-  const start = new Date();
-  const end = new Date();
-  end.setDate(end.getDate() + days - 1);
+/**
+ * Busca posts em um intervalo de datas para o calendário.
+ * Aceita { from, to } (ISO date strings YYYY-MM-DD) ou o legado (days)
+ * — o caller é responsável por derivar from/to no fuso de negócio.
+ */
+export async function calendarRange(opts = 7) {
+  let from;
+  let to;
 
-  const from = start.toISOString().split('T')[0];
-  const to = end.toISOString().split('T')[0];
+  if (typeof opts === 'number') {
+    // Compatibilidade: deriva from/to em UTC (sujeito ao drift de
+    // fuso). Prefira passar { from, to } TZ-aware.
+    const start = new Date();
+    const end = new Date();
+    end.setDate(end.getDate() + opts - 1);
+    from = start.toISOString().split('T')[0];
+    to = end.toISOString().split('T')[0];
+  } else {
+    ({ from, to } = opts);
+  }
 
   const { data, error } = await supabase
     .from(TABLE)
