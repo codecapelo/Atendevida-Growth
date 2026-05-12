@@ -29,7 +29,11 @@ router.get('/', async (_req, res, next) => {
 
 router.get('/posts', async (req, res, next) => {
   try {
-    const page = Math.max(1, parseInt(req.query.page ?? '1', 10));
+    // parseInt('abc') é NaN e Math.max(1, NaN) também é NaN, fazendo
+    // offset virar NaN e a query falhar. Default para 1 em qualquer
+    // valor não-numérico/<=0.
+    const parsedPage = parseInt(req.query.page ?? '1', 10);
+    const page = Number.isFinite(parsedPage) && parsedPage >= 1 ? parsedPage : 1;
     const limit = 20;
     const filters = {
       status: req.query.status || undefined,
