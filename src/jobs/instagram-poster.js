@@ -5,6 +5,7 @@ import { publish, MetaPublishError } from '#services/meta-publisher.js';
 import { validateCaption, ComplianceError } from '#lib/compliance.js';
 import { logger } from '#lib/logger.js';
 import { SCHEDULES, TIMEZONE } from '#config/schedule.js';
+import { todayInTz } from '#lib/date-tz.js';
 
 const MAX_RETRIES = 3;
 const RETRY_BASE_DELAY_MS = 1000;
@@ -72,7 +73,9 @@ export async function runPostingJobForPost(postId, { force = false, post = null 
 }
 
 async function fetchScheduledPost(janela) {
-  const today = new Date().toISOString().split('T')[0];
+  // Resolve "hoje" no fuso de negócio. `toISOString().split('T')[0]` daria UTC
+  // e perderia o post da janela "noite" todos os dias (21h BRT = 00h UTC+1d).
+  const today = todayInTz(TIMEZONE);
 
   const { data, error } = await supabase
     .from('atendevida_social_posts')
