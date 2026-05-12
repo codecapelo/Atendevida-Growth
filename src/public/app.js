@@ -19,7 +19,7 @@ document.addEventListener('alpine:init', () => {
     },
   }));
 
-  Alpine.data('postForm', ({ driveEnabled, initial, postId }) => ({
+  Alpine.data('postForm', ({ driveEnabled, publicBaseUrl, initial, postId }) => ({
     form: {
       copy_principal: initial.copy_principal || '',
       copy_curta: initial.copy_curta || '',
@@ -57,7 +57,12 @@ document.addEventListener('alpine:init', () => {
       }
     },
     pickDriveFile(file) {
-      this.form.imagem_url = `${location.origin}/media/drive/${file.id}`;
+      // PUBLIC_BASE_URL é o domínio público (Railway/produção). Sem ele, Meta
+      // tentaria baixar a imagem de "localhost" se o admin acessar pelo dev.
+      // Em dev sem PUBLIC_BASE_URL definido, cai pra location.origin (vai
+      // funcionar entre máquinas na mesma rede mas não na publicação real).
+      const base = (publicBaseUrl || '').replace(/\/$/, '') || location.origin;
+      this.form.imagem_url = `${base}/media/drive/${file.id}`;
       const input = this.$root.querySelector('input[name="imagem_url"]');
       if (input) input.value = this.form.imagem_url;
       this.drivePickerOpen = false;

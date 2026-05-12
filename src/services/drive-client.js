@@ -22,9 +22,16 @@ function getClient() {
   return driveClient;
 }
 
-export async function listFiles({ folderId = env.GDRIVE_MEDIA_FOLDER_ID } = {}) {
+export async function listFiles({ folderId = env.GDRIVE_MEDIA_FOLDER_ID, kind = 'image' } = {}) {
   const drive = getClient();
-  const q = `'${folderId}' in parents and trashed = false and (mimeType contains 'image/' or mimeType contains 'video/')`;
+  // O picker grava o resultado em imagem_url → Meta rejeita vídeo no
+  // fluxo de imagem estática. Restringir a imagens evita o operador
+  // selecionar um vídeo por engano. Para Reels (v0.3) basta passar kind='video'.
+  const mimeFilter =
+    kind === 'video'
+      ? "mimeType contains 'video/'"
+      : "mimeType contains 'image/'";
+  const q = `'${folderId}' in parents and trashed = false and ${mimeFilter}`;
   const res = await drive.files.list({
     q,
     fields: 'files(id, name, mimeType, thumbnailLink, modifiedTime, size)',

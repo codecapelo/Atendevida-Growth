@@ -5,7 +5,7 @@
 <form
   method="post"
   action="<%= action %>"
-  x-data="postForm({ driveEnabled: <%= driveEnabled ? 'true' : 'false' %>, initial: <%= JSON.stringify({ copy_principal: post.copy_principal, copy_curta: post.copy_curta, hashtags: post.hashtags || [], cta: post.cta, imagem_url: post.imagem_url, imagem_prompt: post.imagem_prompt, video_url: post.video_url, pilar: post.pilar, formato: post.formato, tema: post.tema }) %>, postId: '<%= post.id || '' %>' })"
+  x-data="postForm({ driveEnabled: <%= driveEnabled ? 'true' : 'false' %>, publicBaseUrl: <%= JSON.stringify(publicBaseUrl || '') %>, initial: <%= JSON.stringify({ copy_principal: post.copy_principal, copy_curta: post.copy_curta, hashtags: post.hashtags || [], cta: post.cta, imagem_url: post.imagem_url, imagem_prompt: post.imagem_prompt, video_url: post.video_url, pilar: post.pilar, formato: post.formato, tema: post.tema }) %>, postId: '<%= post.id || '' %>' })"
   class="grid grid-cols-1 lg:grid-cols-3 gap-6"
 >
   <div class="lg:col-span-2 space-y-4">
