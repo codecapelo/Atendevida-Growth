@@ -10,7 +10,7 @@ const MAX_RETRIES = 3;
 const RETRY_BASE_DELAY_MS = 1000;
 
 /**
- * Orquestra a publicação de um post para a janela especificada.
+ * Orquestra a publicação de um post para a janela especificada (chamado pelo cron).
  * @param {'manha' | 'almoco' | 'noite'} janela
  */
 export async function runPostingJob(janela) {
@@ -22,39 +22,52 @@ export async function runPostingJob(janela) {
     return;
   }
 
-  // Lock otimista: marca como publicando para evitar execução dupla
-  const locked = await lockPost(post.id);
+  return runPostingJobForPost(post.id, { force: false, post });
+}
+
+/**
+ * Publica um post específico. Reutilizado pelo cron e pelo botão "Publicar agora".
+ * @param {string} postId
+ * @param {{ force?: boolean, post?: object }} opts - force pula a checagem de status='agendado'.
+ */
+export async function runPostingJobForPost(postId, { force = false, post = null } = {}) {
+  const fullPost = post ?? (await fetchById(postId));
+  if (!fullPost) {
+    logger.warn({ post_id: postId }, 'Post não encontrado');
+    return;
+  }
+
+  const locked = await lockPost(postId, { force });
   if (!locked) {
-    logger.warn({ post_id: post.id }, 'Post já está sendo publicado por outra instância');
+    logger.warn({ post_id: postId }, 'Não foi possível adquirir lock para o post');
     return;
   }
 
   try {
-    const { caption, hashtags, copy_curta } = await refineCaption(post);
+    const { caption, hashtags, copy_curta } = await refineCaption(fullPost);
 
     const { valid, violations } = validateCaption(caption);
     if (!valid) {
       const error = new ComplianceError(violations);
-      logger.error({ post_id: post.id, violations }, 'Violação CFM detectada — post não publicado');
-      await failPost(post.id, error.message);
+      logger.error({ post_id: postId, violations }, 'Violação CFM detectada — post não publicado');
+      await failPost(postId, error.message);
       return;
     }
 
     const fullCaption = formatCaption(caption, hashtags);
+    const { igPostId, permalink } = await publishWithRetry(fullPost, fullCaption);
 
-    const { igPostId, permalink } = await publishWithRetry(post, fullCaption);
-
-    await markPublished(post.id, {
+    await markPublished(postId, {
       instagram_post_id: igPostId,
       instagram_permalink: permalink,
       copy_curta,
       hashtags,
     });
 
-    logger.info({ post_id: post.id, ig_post_id: igPostId }, 'Post publicado com sucesso');
+    logger.info({ post_id: postId, ig_post_id: igPostId }, 'Post publicado com sucesso');
   } catch (err) {
-    logger.error({ post_id: post.id, err: err.message }, 'Falha ao publicar post');
-    await failPost(post.id, err.message);
+    logger.error({ post_id: postId, err: err.message }, 'Falha ao publicar post');
+    await failPost(postId, err.message);
   }
 }
 
@@ -71,20 +84,31 @@ async function fetchScheduledPost(janela) {
     .limit(1)
     .single();
 
-  if (error?.code === 'PGRST116') return null; // nenhum resultado
+  if (error?.code === 'PGRST116') return null;
   if (error) throw error;
   return data;
 }
 
-async function lockPost(postId) {
+async function fetchById(postId) {
   const { data, error } = await supabase
     .from('atendevida_social_posts')
-    .update({ status: 'publicando' })
+    .select('*')
     .eq('id', postId)
-    .eq('status', 'agendado') // condicional: só atualiza se ainda for 'agendado'
-    .select('id')
     .single();
+  if (error?.code === 'PGRST116') return null;
+  if (error) throw error;
+  return data;
+}
 
+async function lockPost(postId, { force }) {
+  let q = supabase
+    .from('atendevida_social_posts')
+    .update({ status: 'publicando' })
+    .eq('id', postId);
+
+  if (!force) q = q.eq('status', 'agendado');
+
+  const { data, error } = await q.select('id').single();
   if (error) return false;
   return !!data;
 }
@@ -120,7 +144,6 @@ async function publishWithRetry(post, caption) {
     } catch (err) {
       lastError = err;
 
-      // Não retentar erros 4xx (cliente) — apenas erros de rede
       if (err instanceof MetaPublishError && err.statusCode >= 400 && err.statusCode < 500) {
         logger.warn({ post_id: post.id, status: err.statusCode }, 'Erro 4xx da Meta — sem retry');
         throw err;
@@ -138,8 +161,8 @@ async function publishWithRetry(post, caption) {
 }
 
 function formatCaption(caption, hashtags) {
-  const tags = hashtags.join(' ');
-  return `${caption}\n\n${tags}`;
+  const tags = (hashtags || []).join(' ');
+  return tags ? `${caption}\n\n${tags}` : caption;
 }
 
 function sleep(ms) {
